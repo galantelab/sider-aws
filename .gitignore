@@ -1,0 +1,2 @@
+# Not include .stamp files
+*.stamp
