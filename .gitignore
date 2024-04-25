@@ -1,2 +1,6 @@
 # Not include .stamp files
 *.stamp
+
+# Not include vim files
+*.swp
+*.swo
