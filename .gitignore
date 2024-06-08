@@ -1,6 +1,9 @@
 # Not include .stamp files
 *.stamp
 
+# Not include @foldrs
+@*/
+
 # Not include vim files
 *.swp
 *.swo
