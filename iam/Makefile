@@ -2,11 +2,12 @@
 
 S3_BUCKETS  := $(S3_BUCKET_REF)
 ARN_BUCKETS := $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)")
+ARN_BUCKETS += $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)/*")
 RESOURCE_JS := $(shell echo '$(ARN_BUCKETS)' | tr ' ' ',')
 
 .PHONY: all
 
-all: $(addprefix @iam/,role.json policy.json attach.stamp)
+all: $(addprefix @roles/,role.json policy.json attach.stamp)
 
 %/attach.stamp: %/policy.json %/role.json
 	aws iam attach-role-policy \
@@ -29,5 +30,5 @@ all: $(addprefix @iam/,role.json policy.json attach.stamp)
 %/aws-batch-policy-resource.json: policies/aws-batch-policy.json | %
 	jq '.Statement[-1].Resource |= [$(RESOURCE_JS)]' $< > $@
 
-@iam:
+@roles:
 	mkdir $@

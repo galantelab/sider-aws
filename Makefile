@@ -2,7 +2,7 @@ SHELL         := bash
 MAKE_DIR      := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 S3_DIR        := $(MAKE_DIR)s3
 ECR_DIR       := $(MAKE_DIR)ecr
-ROLES_DIR     := $(MAKE_DIR)roles
+IAM_DIR       := $(MAKE_DIR)iam
 CONFIG_FILE   ?= config.mk
 CONFIG_FILE   := $(abspath $(CONFIG_FILE))
 
@@ -13,12 +13,12 @@ export \
 	MAKE_DIR \
 	S3_DIR \
 	ECR_DIR \
-	ROLES_DIR \
+	IAM_DIR \
 	CONFIG_FILE
 
 .PHONY: all
 
-all: s3 ecr roles
+all: s3 ecr iam
 
 .PHONY: s3
 
@@ -30,7 +30,7 @@ s3:
 ecr:
 	$(MAKE) -C $(ECR_DIR)
 
-.PHONY: roles
+.PHONY: iam
 
-roles:
-	$(MAKE) -C $(ROLES_DIR)
+iam:
+	$(MAKE) -C $(IAM_DIR)
