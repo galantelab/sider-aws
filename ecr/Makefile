@@ -19,7 +19,7 @@ all: @$(ECR_IMAGE)/ecr.stamp
 	touch $@
 
 %/ecr_uri.txt: %/ecr.json
-	awk '/repositoryUri/ {gsub(/"/,""); print $$2}' $< > $@
+	jq -r '.repository.repositoryUri' $< > $@
 
 .PRECIOUS: %/ecr.json
 
