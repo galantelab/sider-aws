@@ -5,3 +5,4 @@ ECR_IMAGE        := siderp
 ECR_IMAGE_TAG    := latest
 IAM_ROLE_BATCH   := siderAWSBatchRole
 IAM_POLICY_BATCH := siderAWSBatchPolicy
+EC2_KEY_PAIR     := sider-key-pair

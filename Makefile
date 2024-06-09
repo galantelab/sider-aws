@@ -3,6 +3,7 @@ MAKE_DIR      := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 S3_DIR        := $(MAKE_DIR)s3
 ECR_DIR       := $(MAKE_DIR)ecr
 IAM_DIR       := $(MAKE_DIR)iam
+EC2_DIR       := $(MAKE_DIR)ec2
 CONFIG_FILE   ?= config.mk
 CONFIG_FILE   := $(abspath $(CONFIG_FILE))
 
@@ -14,11 +15,12 @@ export \
 	S3_DIR \
 	ECR_DIR \
 	IAM_DIR \
+	EC2_DIR \
 	CONFIG_FILE
 
 .PHONY: all
 
-all: s3 ecr iam
+all: s3 ecr iam ec2
 
 .PHONY: s3
 
@@ -34,3 +36,8 @@ ecr:
 
 iam:
 	$(MAKE) -C $(IAM_DIR)
+
+.PHONY: ec2
+
+ec2:
+	$(MAKE) -C $(EC2_DIR)
