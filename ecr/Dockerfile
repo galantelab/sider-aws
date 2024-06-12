@@ -48,10 +48,11 @@ RUN set -e; \
     rm -rf aws/ awscliv2.zip
 
 COPY --from=sider_source /usr/local/bin/sider /usr/local/bin/
-
 COPY fetch_and_run.sh /usr/local/bin/
 
 USER nobody:nogroup
+
 WORKDIR /home/workdir
+VOLUME /home/workdir
 
 ENTRYPOINT ["fetch_and_run.sh"]
