@@ -13,6 +13,9 @@ all: $(addprefix @roles/,role.json policy.json attach.stamp)
 	aws iam attach-role-policy \
 		--role-name=$(IAM_ROLE_BATCH) \
 		--policy-arn=$$(jq -r '.Policy.Arn' $<)
+	aws iam attach-role-policy \
+		--role-name=$(IAM_ROLE_BATCH) \
+		--policy-arn='arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
 	touch $@
 
 %/policy.json: %/aws-batch-policy-resource.json
