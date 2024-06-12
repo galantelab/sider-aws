@@ -1,10 +1,33 @@
 -include $(CONFIG_FILE)
 
-AWS_REGION_ZONES := a b c d e f
-
 .PHONY: all
 
-all: key-pair vpc
+all: key-pair vpc launch-template
+
+.PHONY: launch-template
+
+launch-template: @launch_template/launch_template.json
+
+%/launch_template.json: %/launch_template_data_resource.json
+	aws ec2 create-launch-template \
+		--launch-template-name=$(EC2_LAUNCH_TEMPLATE) \
+		--version-description="Batch Job Template for sider" \
+		--launch-template-data="$$(cat $<)" \
+		> $@
+
+%/launch_template_data_resource.json: data/launch_template_data.json %/user_data.base64 | %
+	jq '.ImageId = "$(EC2_IMAGE_ID)"' $(word 1,$^) \
+		| jq '.InstanceType = "$(EC2_INSTANCE_TYPE)"' \
+		| jq '.BlockDeviceMappings[0].Ebs.VolumeSize = $(EBS_VOLUME_SIZE)' \
+		| jq '.BlockDeviceMappings[0].Ebs.VolumeType = "$(EBS_VOLUME_TYPE)"' \
+		| jq --arg data "$$(cat $(word 2,$^))" '.UserData = $$data' \
+		> $@
+
+%/user_data.base64: data/user_data.sh | %
+	sed ':a;N;$$!ba;s/\n/\\n/g' $< | base64 > $@
+
+@launch_template:
+	mkdir $@
 
 .PHONY: vpc
 
@@ -74,47 +97,34 @@ endef
 %/gateway.json: | %
 	aws ec2 create-internet-gateway > $@
 
-%/subnet_a.json: %/vpc.json
+define subnet_tt =
 	aws ec2 create-subnet \
 		--vpc-id=$$(jq -r '.Vpc.VpcId' $<) \
-		--cidr-block=10.0.1.0/24 \
-		--availability-zone=$(AWS_REGION)a \
+		--cidr-block=10.0.$(2).0/24 \
+		--availability-zone=$(AWS_REGION)$(1) \
 		> $@
+	aws ec2 modify-subnet-attribute \
+		--subnet-id=$$(jq -r '.Subnet.SubnetId' $@) \
+		--map-public-ip-on-launch
+endef
+
+%/subnet_a.json: %/vpc.json
+	$(call subnet_tt,a,1)
 
 %/subnet_b.json: %/vpc.json
-	aws ec2 create-subnet \
-		--vpc-id=$$(jq -r '.Vpc.VpcId' $<) \
-		--cidr-block=10.0.2.0/24 \
-		--availability-zone=$(AWS_REGION)b \
-		> $@
+	$(call subnet_tt,b,2)
 
 %/subnet_c.json: %/vpc.json
-	aws ec2 create-subnet \
-		--vpc-id=$$(jq -r '.Vpc.VpcId' $<) \
-		--cidr-block=10.0.3.0/24 \
-		--availability-zone=$(AWS_REGION)c \
-		> $@
+	$(call subnet_tt,c,3)
 
 %/subnet_d.json: %/vpc.json
-	aws ec2 create-subnet \
-		--vpc-id=$$(jq -r '.Vpc.VpcId' $<) \
-		--cidr-block=10.0.4.0/24 \
-		--availability-zone=$(AWS_REGION)d \
-		> $@
+	$(call subnet_tt,d,4)
 
 %/subnet_e.json: %/vpc.json
-	aws ec2 create-subnet \
-		--vpc-id=$$(jq -r '.Vpc.VpcId' $<) \
-		--cidr-block=10.0.5.0/24 \
-		--availability-zone=$(AWS_REGION)e \
-		> $@
+	$(call subnet_tt,e,5)
 
 %/subnet_f.json: %/vpc.json
-	aws ec2 create-subnet \
-		--vpc-id=$$(jq -r '.Vpc.VpcId' $<) \
-		--cidr-block=10.0.6.0/24 \
-		--availability-zone=$(AWS_REGION)f \
-		> $@
+	$(call subnet_tt,f,6)
 
 %/vpc.json: | %
 	aws ec2 create-vpc --cidr-block=10.0.0.0/16 > $@
