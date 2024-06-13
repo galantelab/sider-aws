@@ -4,6 +4,7 @@ S3_DIR        := $(MAKE_DIR)s3
 ECR_DIR       := $(MAKE_DIR)ecr
 IAM_DIR       := $(MAKE_DIR)iam
 EC2_DIR       := $(MAKE_DIR)ec2
+BATCH_DIR     := $(MAKE_DIR)batch
 CONFIG_FILE   ?= config.mk
 CONFIG_FILE   := $(abspath $(CONFIG_FILE))
 
@@ -16,11 +17,12 @@ export \
 	ECR_DIR \
 	IAM_DIR \
 	EC2_DIR \
+	BATCH_DIR \
 	CONFIG_FILE
 
 .PHONY: all
 
-all: s3 ecr iam ec2
+all: s3 ecr iam ec2 batch
 
 .PHONY: s3
 
@@ -41,3 +43,8 @@ iam:
 
 ec2:
 	$(MAKE) -C $(EC2_DIR)
+
+.PHONY: batch
+
+batch:
+	$(MAKE) -C $(BATCH_DIR)
