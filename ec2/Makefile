@@ -8,23 +8,36 @@ all: key-pair vpc launch-template
 
 launch-template: @launch_template/launch_template.json
 
-%/launch_template.json: %/launch_template_data_resource.json
+%/launch_template.json: %/launch_template_data.json
 	aws ec2 create-launch-template \
 		--launch-template-name=$(EC2_LAUNCH_TEMPLATE) \
 		--version-description="Batch Job Template for sider" \
 		--launch-template-data="$$(cat $<)" \
 		> $@
 
-%/launch_template_data_resource.json: data/launch_template_data.json %/user_data.base64 | %
-	jq '.ImageId = "$(EC2_IMAGE_ID)"' $(word 1,$^) \
-		| jq '.InstanceType = "$(EC2_INSTANCE_TYPE)"' \
-		| jq '.BlockDeviceMappings[0].Ebs.VolumeSize = $(EBS_VOLUME_SIZE)' \
-		| jq '.BlockDeviceMappings[0].Ebs.VolumeType = "$(EBS_VOLUME_TYPE)"' \
-		| jq --arg data "$$(cat $(word 2,$^))" '.UserData = $$data' \
-		> $@
+%/launch_template_data.json: %/user_data.base64
+	echo -e \
+		'{\n' \
+		' "ImageId": "$(EC2_IMAGE_ID)",\n' \
+		' "InstanceType": "$(EC2_INSTANCE_TYPE)",\n' \
+		' "KeyName": "$(EC2_KEY_PAIR)",\n' \
+		' "Monitoring": {\n' \
+		'   "Enabled": true\n' \
+		' },\n' \
+		' "BlockDeviceMappings": [\n' \
+		'   {\n' \
+		'     "DeviceName": "/dev/ebs",\n' \
+		'     "Ebs": {\n' \
+		'       "DeleteOnTermination": true,\n' \
+		'       "VolumeSize": $(EBS_VOLUME_SIZE),\n' \
+		'       "VolumeType": "$(EBS_VOLUME_TYPE)"\n' \
+		'     }\n' \
+		'   }\n' \
+		' ],\n' \
+		' "UserData":' "\"$$(cat $<)\"\n}" > $@
 
 %/user_data.base64: data/user_data.sh | %
-	sed ':a;N;$$!ba;s/\n/\\n/g' $< | base64 > $@
+	sed ':a;N;$$!ba;s/\n/\\n/g' $< | base64 -w0 > $@
 
 @launch_template:
 	mkdir $@
