@@ -11,6 +11,7 @@ ARN_INSTANCE += arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
 .PHONY: all
 
 all: \
+	$(addprefix @roles/,instance-profile.json instance_profile_attach.stamp) \
 	$(addprefix @roles/,instance-role.json instance-custom-policy.json instance_attach.stamp) \
 	$(addprefix @roles/,service-role.json service_attach.stamp)
 
@@ -26,6 +27,17 @@ all: \
 	aws iam create-role \
 		--role-name=$(IAM_SERVICE_ROLE) \
 		--assume-role-policy-document=file://$< \
+		> $@
+
+%/instance_profile_attach.stamp: %/instance_attach.stamp
+	aws iam add-role-to-instance-profile \
+		--instance-profile-name=$(IAM_INSTANCE_PROFILE) \
+		--role-name=$(IAM_INSTANCE_ROLE)
+	touch $@
+
+%/instance-profile.json: | %
+	aws iam create-instance-profile \
+		--instance-profile-name=$(IAM_INSTANCE_PROFILE) \
 		> $@
 
 %/instance_attach.stamp: %/instance-custom-policy.json %/instance-role.json
