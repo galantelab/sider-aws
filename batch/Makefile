@@ -13,7 +13,7 @@ compute-environment: @compute_environment/compute_environment.json
 		--compute-environment-name=$(BATCH_COMP_ENV) \
 		--type=MANAGED \
 		--state=ENABLED \
-		--service-role= \
+		--service-role=$(IAM_SERVICE_ROLE) \
 		--compute-resources="$$(cat $<)" \
 		> $@
 
@@ -24,9 +24,10 @@ compute-environment: @compute_environment/compute_environment.json
 		' "minvCpus": $(BATCH_MINVCPUS),\n' \
 		' "desiredvCpus": $(BATCH_DESIREDVCPUS),\n' \
 		' "maxvCpus": $(BATCH_MAXVCPUS),\n' \
+		' "instanceTypes": ["$(EC2_INSTANCE_TYPE)"],\n' \
 		' "subnets":' "$$(cat $<),\n" \
 		' "securityGroupIds": ["$(EC2_SECURITY_GROUP)"],\n' \
-		' "instanceRole": "$(IAM_ROLE_BATCH)",\n' \
+		' "instanceRole": "$(IAM_INSTANCE_ROLE)",\n' \
 		' "launchTemplate": {\n' \
 		'   "launchTemplateName": "$(EC2_LAUNCH_TEMPLATE)",\n' \
 		'   "version": "$$Latest"\n' \
