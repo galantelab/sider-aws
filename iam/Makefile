@@ -1,36 +1,54 @@
 -include $(CONFIG_FILE)
 
-S3_BUCKETS  := $(S3_BUCKET_REF)
-ARN_BUCKETS := $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)")
-ARN_BUCKETS += $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)/*")
-RESOURCE_JS := $(shell echo '$(ARN_BUCKETS)' | tr ' ' ',')
+S3_BUCKETS   := $(S3_BUCKET_REF)
+ARN_BUCKETS  := $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)")
+ARN_BUCKETS  += $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)/*")
+RESOURCE_JS  := $(shell echo '$(ARN_BUCKETS)' | tr ' ' ',')
+ARN_SERVICE  := arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+ARN_INSTANCE := arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+ARN_INSTANCE += arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
 
 .PHONY: all
 
-all: $(addprefix @roles/,role.json policy.json attach.stamp)
+all: \
+	$(addprefix @roles/,instance-role.json instance-custom-policy.json instance_attach.stamp) \
+	$(addprefix @roles/,service-role.json service_attach.stamp)
 
-%/attach.stamp: %/policy.json %/role.json
-	aws iam attach-role-policy \
-		--role-name=$(IAM_ROLE_BATCH) \
-		--policy-arn=$$(jq -r '.Policy.Arn' $<)
-	aws iam attach-role-policy \
-		--role-name=$(IAM_ROLE_BATCH) \
-		--policy-arn='arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+%/service_attach.stamp: %/service-role.json
+	for policy in $(ARN_SERVICE); do \
+		aws iam attach-role-policy \
+			--role-name=$(IAM_SERVICE_ROLE) \
+			--policy-arn="$$policy"; \
+	done
 	touch $@
 
-%/policy.json: %/aws-batch-policy-resource.json
-	aws iam create-policy \
-		--policy-name=$(IAM_POLICY_BATCH) \
-		--policy-document=file://$< \
-		> $@
-
-%/role.json: policies/trust-policy.json | %
+%/service-role.json: policies/service-trust-policy.json | %
 	aws iam create-role \
-		--role-name=$(IAM_ROLE_BATCH) \
+		--role-name=$(IAM_SERVICE_ROLE) \
 		--assume-role-policy-document=file://$< \
 		> $@
 
-%/aws-batch-policy-resource.json: policies/aws-batch-policy.json | %
+%/instance_attach.stamp: %/instance-custom-policy.json %/instance-role.json
+	for policy in $(ARN_INSTANCE) $$(jq -r '.Policy.Arn' $<); do \
+		aws iam attach-role-policy \
+			--role-name=$(IAM_INSTANCE_ROLE) \
+			--policy-arn="$$policy"; \
+	done
+	touch $@
+
+%/instance-custom-policy.json: %/instance-s3-policy-resource.json
+	aws iam create-policy \
+		--policy-name=$(IAM_INSTANCE_POLICY) \
+		--policy-document=file://$< \
+		> $@
+
+%/instance-role.json: policies/instance-trust-policy.json | %
+	aws iam create-role \
+		--role-name=$(IAM_INSTANCE_ROLE) \
+		--assume-role-policy-document=file://$< \
+		> $@
+
+%/instance-s3-policy-resource.json: policies/instance-s3-policy.json | %
 	jq '.Statement[-1].Resource |= [$(RESOURCE_JS)]' $< > $@
 
 @roles:
