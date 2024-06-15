@@ -26,7 +26,7 @@ launch-template: @launch_template/launch_template.json
 		' },\n' \
 		' "BlockDeviceMappings": [\n' \
 		'   {\n' \
-		'     "DeviceName": "/dev/ebs",\n' \
+		'     "DeviceName": "/dev/sdf",\n' \
 		'     "Ebs": {\n' \
 		'       "DeleteOnTermination": true,\n' \
 		'       "VolumeSize": $(EBS_VOLUME_SIZE),\n' \
@@ -36,8 +36,8 @@ launch-template: @launch_template/launch_template.json
 		' ],\n' \
 		' "UserData":' "\"$$(cat $<)\"\n}" > $@
 
-%/user_data.base64: data/user_data.sh | %
-	sed ':a;N;$$!ba;s/\n/\\n/g' $< | base64 -w0 > $@
+%/user_data.base64: data/write-mime-multipart.py data/user_data.sh | %
+	python $^ | base64 -w0 > $@
 
 @launch_template:
 	mkdir $@
