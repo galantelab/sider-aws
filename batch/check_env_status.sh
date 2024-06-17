@@ -24,7 +24,9 @@ while true; do
 	rc="$(jq -r '.[0]' "$tfile")"
 	msg="$(jq -r '.[1]' "$tfile")"
 
-	echo "$msg" >&2
+	if [[ "$msg" != "null" ]]; then
+		echo "$msg" >&2
+	fi
 
 	case "$rc" in
 		VALID)   exit 0 ;;
