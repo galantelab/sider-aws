@@ -15,13 +15,22 @@ job-queue: $(addprefix @job_queue/,job_queue.json job_definition.json)
 		--container-properties="$$(cat $<)" \
 		> $@
 
-%/container_properties.json: %/ecr_image.json
+%/container_properties.json: %/ecr_image.json %/execution_role.json
 	echo -e \
 		'{\n' \
-		' "image":' "$$(cat $<),\n" \
-		' "vcpus": $(EC2_INSTANCE_CPUS),\n' \
-		' "memory": $(EC2_INSTANCE_MEM),\n' \
+		' "image":' "$$(cat $(word 1,$^)),\n" \
 		' "command": ["fetch_and_run.sh"],\n' \
+		' "executionRoleArn":' "$$(cat $(word 2,$^)),\n" \
+		' "resourceRequirements": [\n' \
+		'   {\n' \
+		'     "value": "$(EC2_INSTANCE_CPUS)",\n' \
+		'     "type": "VCPU"\n' \
+		'   },\n' \
+		'   {\n' \
+		'     "value": "$(EC2_INSTANCE_MEM)",\n' \
+		'     "type": "MEMORY"\n' \
+		'   }\n' \
+		' ],\n' \
 		' "environment": [\n' \
 		'   {\n' \
 		'     "name": "BATCH_FILE_S3_URL",\n' \
@@ -55,6 +64,9 @@ job-queue: $(addprefix @job_queue/,job_queue.json job_definition.json)
 		'     "readOnly": false\n' \
 		'   }\n' \
 		' ]\n}' > $@
+
+%/execution_role.json: $(MAKE_DIR)iam/@roles/execution-role.json | %
+	jq '.Role.Arn' $< > $@
 
 %/ecr_image.json: $(MAKE_DIR)ecr/@siderp/ecr.json | %
 	echo "\"$$(jq -r '.repository.repositoryUri' $<):$(ECR_IMAGE_TAG)\"" > $@
