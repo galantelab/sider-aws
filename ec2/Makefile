@@ -26,7 +26,7 @@ launch-template: @launch_template/launch_template.json
 		' },\n' \
 		' "BlockDeviceMappings": [\n' \
 		'   {\n' \
-		'     "DeviceName": "/dev/sdf",\n' \
+		'     "DeviceName": "$(EBS_VOLUME_DEVICE)",\n' \
 		'     "Ebs": {\n' \
 		'       "DeleteOnTermination": true,\n' \
 		'       "VolumeSize": $(EBS_VOLUME_SIZE),\n' \
@@ -36,8 +36,20 @@ launch-template: @launch_template/launch_template.json
 		' ],\n' \
 		' "UserData":' "\"$$(cat $<)\"\n}" > $@
 
-%/user_data.base64: data/write-mime-multipart.py data/user_data.sh | %
+%/user_data.base64: write-mime-multipart.py %/user_data.sh
 	python $^ | base64 -w0 > $@
+
+%/user_data.sh: | %
+	echo -e \
+		'#!/usr/bin/env bash\n' \
+		'useradd -u $(ECR_UID) -m $(ECR_USER)\n' \
+		'mkfs -t ext4 $(EBS_VOLUME_DEVICE)\n' \
+		'mkdir -p $(EBS_MOUNT_DIR)\n' \
+		'mount $(EBS_VOLUME_DEVICE) $(EBS_MOUNT_DIR)\n' \
+		'chown -R $(ECR_USER):$(ECR_USER) $(EBS_MOUNT_DIR)\n' \
+		'chmod 755 $(EBS_MOUNT_DIR)\n' \
+		'echo "$(EBS_VOLUME_DEVICE) $(EBS_MOUNT_DIR) ext4 defaults,nofail 0 2" >> /etc/fstab' \
+		> $@
 
 @launch_template:
 	mkdir $@

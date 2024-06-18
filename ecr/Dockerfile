@@ -4,6 +4,8 @@ FROM ubuntu:20.04
 
 LABEL maintainer="tmiller@mochsl.org.br"
 
+ARG user uid home
+
 RUN set -e; \
     \
     apt-get update; \
@@ -50,9 +52,10 @@ RUN set -e; \
 COPY --from=sider_source /usr/local/bin/sider /usr/local/bin/
 COPY fetch_and_run.sh /usr/local/bin/
 
-USER nobody:nogroup
+RUN useradd -u ${uid} -m -d ${home} ${user}
+USER ${user}
 
-WORKDIR /home/workdir
-VOLUME /home/workdir
+WORKDIR ${home}
+VOLUME ${home}
 
 ENTRYPOINT ["fetch_and_run.sh"]

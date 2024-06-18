@@ -21,6 +21,7 @@ job-queue: $(addprefix @job_queue/,job_queue.json job_definition.json)
 		' "image":' "$$(cat $(word 1,$^)),\n" \
 		' "command": ["fetch_and_run.sh"],\n' \
 		' "executionRoleArn":' "$$(cat $(word 2,$^)),\n" \
+		' "user": "$(ECR_USER):$(ECR_USER)",\n' \
 		' "resourceRequirements": [\n' \
 		'   {\n' \
 		'     "value": "$(EC2_INSTANCE_CPUS)",\n' \
@@ -52,7 +53,7 @@ job-queue: $(addprefix @job_queue/,job_queue.json job_definition.json)
 		' "volumes": [\n' \
 		'   {\n' \
 		'     "host": {\n' \
-		'       "sourcePath": "/home/workdir"\n' \
+		'       "sourcePath": "$(EBS_MOUNT_DIR)"\n' \
 		'     },\n' \
 		'     "name": "workdir-volume"\n' \
 		'   }\n' \
@@ -60,7 +61,7 @@ job-queue: $(addprefix @job_queue/,job_queue.json job_definition.json)
 		' "mountPoints": [\n' \
 		'   {\n' \
 		'     "sourceVolume": "workdir-volume",\n' \
-		'     "containerPath": "/home/workdir",\n' \
+		'     "containerPath": "$(ECR_HOME)",\n' \
 		'     "readOnly": false\n' \
 		'   }\n' \
 		' ]\n}' > $@
