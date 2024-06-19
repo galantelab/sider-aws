@@ -1,8 +1,11 @@
 AWS_REGION           := us-east-1
 AWS_REGION_ZONES     := a b c d e f
 S3_BUCKET_REF        := sider-ref
+S3_BUCKET_INPUT      := sider-input
+S3_BUCKET_OUTPUT     := sider-output
 GENOME_PATH          := /home/genomes/Homo_sapiens/hg38/hg38.25chr.fa.gz
 ANNOTATION_PATH      := /home/projects2/databases/gencode/release36/gencode.v36.annotation.gtf.gz
+GDC_TOKEN_PATH       := /home/projects2/TCGA/token/gdc-user-token.2024-06-10T11_39_38.915Z.txt
 ECR_IMAGE            := siderp
 ECR_IMAGE_TAG        := latest
 ECR_USER             := galantelab

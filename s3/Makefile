@@ -1,11 +1,12 @@
 -include $(CONFIG_FILE)
 
-FILES  := $(GENOME_PATH) $(ANNOTATION_PATH)
+BDIRS  := @$(S3_BUCKET_REF) @$(S3_BUCKET_INPUT) @$(S3_BUCKET_OUTPUT)
+FILES  := $(GENOME_PATH) $(ANNOTATION_PATH) $(GDC_TOKEN_PATH)
 STAMPS := $(addprefix @$(S3_BUCKET_REF)/,$(addsuffix .stamp,$(notdir $(FILES))))
 
 .PHONY: all
 
-all: $(STAMPS)
+all: $(STAMPS) $(BDIRS)
 
 $(STAMPS): | @$(S3_BUCKET_REF)
 
@@ -17,8 +18,8 @@ endef
 
 $(foreach file, $(FILES), $(eval $(call s3_cp_tt,$(file))))
 
-@$(S3_BUCKET_REF):
-	if ! aws s3api head-bucket --bucket=$(S3_BUCKET_REF) 2> /dev/null; then \
-		aws s3api create-bucket --bucket=$(S3_BUCKET_REF); \
+$(BDIRS):
+	if ! aws s3api head-bucket --bucket=$(subst @,,$@) 2> /dev/null; then \
+		aws s3api create-bucket --bucket=$(subst @,,$@) > /dev/null; \
 	fi
 	mkdir $@
