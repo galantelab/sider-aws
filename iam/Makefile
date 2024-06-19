@@ -1,6 +1,6 @@
 -include $(CONFIG_FILE)
 
-S3_BUCKETS    := $(S3_BUCKET_REF)
+S3_BUCKETS    := $(S3_BUCKET_REF) $(S3_BUCKET_INPUT) $(S3_BUCKET_OUTPUT)
 ARN_BUCKETS   := $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)")
 ARN_BUCKETS   += $(foreach b,$(S3_BUCKETS),"arn:aws:s3:::$(b)/*")
 RESOURCE_JS   := $(shell echo '$(ARN_BUCKETS)' | tr ' ' ',')
