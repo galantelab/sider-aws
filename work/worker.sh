@@ -5,21 +5,23 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+readonly PROGNAME="worker"
+
 say() {
-	echo -e "[$(caller)] $@" >&2
+	echo -e "[${BASH_LINENO[0]} $PROGNAME] $@" >&2
 }
 
 die() {
-	echo -e "[$(caller)] $@" >&2
+	echo -e "[${BASH_LINENO[0]} $PROGNAME] $@" >&2
 	exit 1
 }
 
 usage() {
-	local name_space=$(echo "Usage: $0" | tr '[:alnum:].:' ' ')
+	local name_space=$(echo "Usage: $PROGNAME" | tr '[:alnum:].:' ' ')
 	local acm=0
 	local key
 
-	echo -ne "\nUsage: $0 [-h|--help]"
+	echo -ne "\nUsage: $PROGNAME [-h|--help]"
 
 	for key in "${!OPTIONS[@]}"; do
 		if (( ++acm % 2 )); then
@@ -91,7 +93,7 @@ declare -A OPTIONS=(
 )
 
 # Join OPTIONS by ',' and set a needed value ':'
-LONG_OPTIONS=$(sed -e 's/ /:,/g' -e 's/$/:/' <<< "${!OPTIONS[@]}")
+LONG_OPTIONS=$(sed -e 's/--//g' -e 's/ /:,/g' -e 's/$/:/' <<< "${!OPTIONS[@]}")
 
 # Just print usage if there is no options at all
 [[ $# -eq 0 ]] && { usage; exit; }

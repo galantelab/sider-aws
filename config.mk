@@ -33,3 +33,5 @@ BATCH_MAXVCPUS       := 8000
 BATCH_COMP_ENV       := sider-env
 BATCH_JOB_QUEUE      := sider-job-queue
 BATCH_JOB_DEF        := sider-job-definition
+WORK_MANIFEST_FILE   := toy_manifest
+WORK_BATCH_SIZE      := 10
