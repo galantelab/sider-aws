@@ -99,7 +99,7 @@ LONG_OPTIONS=$(sed -e 's/--//g' -e 's/ /:,/g' -e 's/$/:/' <<< "${!OPTIONS[@]}")
 [[ $# -eq 0 ]] && { usage; exit; }
 
 # Prepare getopt parsing
-TEMP=$(getopt -n "$0" -o 'h' --long "help,$LONG_OPTIONS" -- "$@")
+TEMP=$(getopt -n "$PROGNAME" -o 'h' --long "help,$LONG_OPTIONS" -- "$@")
 
 # Parse getopt
 eval set -- "$TEMP"
