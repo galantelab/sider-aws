@@ -9,12 +9,12 @@ JOBS      := $(shell for i in $$(seq -f '%02.0f' $(NUM_JOBS)); do echo "$(DIR)/b
 
 all: $(JOBS)
 
-$(DIR)/%.json: $(DIR)/command_%.json
+$(DIR)/%.json: $(DIR)/worker.stamp $(DIR)/command_%.json
 	aws batch submit-job \
 		--job-name=$* \
 		--job-queue=$(BATCH_JOB_QUEUE) \
 		--job-definition=$(BATCH_JOB_DEF) \
-		--container-overrides="$$(cat $<)" \
+		--container-overrides="$$(cat $(word 2,$^))" \
 		> $@
 
 $(DIR)/command_%.json: $(DIR)/MANIFEST.%.stamp
@@ -36,6 +36,10 @@ $(DIR)/command_%.json: $(DIR)/MANIFEST.%.stamp
 		'  --sider-quality\n20\n' \
 		'  --sider-genotype\n5\n' \
 		'  --gdc-jobs\n10\n' | sed 's/ //g' | jq -Rcn '.command = [inputs]' > $@
+
+$(DIR)/worker.stamp: worker.sh | $(DIR)
+	aws s3 cp --quiet $< s3://$(S3_BUCKET_REF)
+	touch $@
 
 $(DIR)/MANIFEST.%.stamp: $(DIR)/MANIFEST.%
 	aws s3 cp --quiet $< s3://$(S3_BUCKET_INPUT)

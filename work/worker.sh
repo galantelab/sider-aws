@@ -260,3 +260,52 @@ sider make-vcf \
 	--prefix="$SIDER_PREFIX" \
 	"$SIDER_DB_DIR/$SIDER_PREFIX.db" \
 	|| die "Failed to run 'sider make-vcf' step"
+
+# Set a sqlite3 query in order to catch split reads by sample
+readonly SQL_QUERY="
+WITH
+	split_read (retrocopy_id, source_id, acm) AS (
+		SELECT retrocopy_id, source_id, COUNT(*)
+		FROM (
+			SELECT retrocopy_id, source_id, alignment_id
+			FROM retrocopy AS r
+			INNER JOIN cluster_merging AS cm
+				ON r.id = cm.retrocopy_id
+			INNER JOIN clustering AS c
+				USING (cluster_id, cluster_sid)
+			INNER JOIN alignment AS a
+				ON a.id = c.alignment_id
+			WHERE a.flag & 0x800
+				AND (
+					((cigar LIKE '%M%S' OR cigar LIKE '%M%H')
+						AND (a.pos + a.rlen) = insertion_point)
+						OR ((cigar LIKE '%S%M' OR cigar LIKE '%H%M')
+						AND a.pos = insertion_point)
+				)
+			)
+		GROUP BY retrocopy_id, source_id
+	)
+SELECT
+	r.chr AS CHROM,
+	CASE
+		WHEN r.insertion_point = 1
+			THEN 1
+		ELSE r.insertion_point - 1
+	END AS POS,
+	r.parental_gene_name AS PG,
+	s.path AS SAMPLE,
+	sr.acm AS SR
+FROM retrocopy AS r
+INNER JOIN split_read AS sr
+	ON r.id = sr.retrocopy_id
+INNER JOIN source AS s
+	ON s.id = sr.source_id"
+
+say "Query split reads at '$SIDER_DB_DIR/$SIDER_PREFIX.db'"
+sqlite3 --tabs "$SIDER_DB_DIR/$SIDER_PREFIX.db" "$SQL_QUERY" \
+	| while read -ra cols; do
+		path="${cols[3]}"; path="${path##*/}"
+		cols[3]="${path%.*}"
+		printf -v str '%s\t' "${cols[@]}"
+		echo "${str%?}"
+	done > "$OUTPUT_DIR/${SIDER_PREFIX}_split_reads.tsv"
