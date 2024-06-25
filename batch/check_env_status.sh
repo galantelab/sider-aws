@@ -1,28 +1,25 @@
 #!/usr/bin/env bash
 
+set -e
+
 [[ -z "$1" ]] && { echo "No env passed" >&2; exit 1; }
 
 tic="${2:-10}"
-tfile="$(mktemp)"
-
-trap 'rm -f "$tfile"' EXIT
 
 while true; do
 	sleep "$tic"
 
-	aws batch describe-compute-environments \
+	status=$(aws batch describe-compute-environments \
 		--compute-environments="$1" \
-		--no-paginate \
-		--query='computeEnvironments[0].[status,statusReason]' \
-		> "$tfile"
+		--query='computeEnvironments[0].[status,statusReason]')
 
-	if [[ "$(cat $tfile)" == "null" ]]; then
+	if [[ -z "$status" || "$status" == "null" ]]; then
 		echo "Error. Maybe the env '$1' does not exist" >&2
 		exit 1
 	fi
 
-	rc="$(jq -r '.[0]' "$tfile")"
-	msg="$(jq -r '.[1]' "$tfile")"
+	rc="$(jq -r '.[0]' <<< "$status")"
+	msg="$(jq -r '.[1]' <<< "$status")"
 
 	if [[ "$msg" != "null" ]]; then
 		echo "$msg" >&2
