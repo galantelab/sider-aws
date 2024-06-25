@@ -19,6 +19,7 @@ RUN set -e; \
       liblzma-dev \
       libncurses5-dev \
       make \
+      sqlite3 \
       unzip \
       zlib1g-dev \
       wget; \
