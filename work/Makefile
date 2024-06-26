@@ -25,17 +25,17 @@ $(DIR)/command_%.json: $(DIR)/MANIFEST.%.stamp
 		'  --s3-annotation-file\ns3://$(S3_BUCKET_REF)/$(notdir $(ANNOTATION_PATH))\n' \
 		'  --s3-manifest-file\ns3://$(S3_BUCKET_INPUT)/$(notdir $(basename $<))\n' \
 		'  --s3-gdc-token\ns3://$(S3_BUCKET_REF)/$(notdir $(GDC_TOKEN_PATH))\n' \
-		'  --sider-prefix\nsider\n' \
-		'  --sider-threads\n10\n' \
-		'  --sider-epsilon\n500\n' \
-		'  --sider-min-pts\n5\n' \
-		'  --sider-cache\n2000000\n' \
-		'  --sider-max-dist\n15000\n' \
-		'  --sider-exon-frac\n0.25\n' \
-		'  --sider-align-frac\n0.25\n' \
-		'  --sider-quality\n20\n' \
-		'  --sider-genotype\n5\n' \
-		'  --gdc-jobs\n10\n' | sed 's/ //g' | jq -Rcn '.command = [inputs]' > $@
+		'  --sider-prefix\n$(SIDER_PREFIX)\n' \
+		'  --sider-threads\n$(SIDER_THREADS)\n' \
+		'  --sider-epsilon\n$(SIDER_EPSILON)\n' \
+		'  --sider-min-pts\n$(SIDER_MIN_PTS)\n' \
+		'  --sider-cache\n$(SIDER_CACHE)\n' \
+		'  --sider-max-dist\n$(SIDER_MAX_DIST)\n' \
+		'  --sider-exon-frac\n$(SIDER_EXON_FRAC)\n' \
+		'  --sider-align-frac\n$(SIDER_ALIGN_FRAC)\n' \
+		'  --sider-quality\n$(SIDER_QUALITY)\n' \
+		'  --sider-genotype\n$(SIDER_GENOTYPE)\n' \
+		'  --gdc-jobs\n$(GDC_JOBS)\n' | sed 's/ //g' | jq -Rcn '.command = [inputs]' > $@
 
 $(DIR)/worker.stamp: worker.sh | $(DIR)
 	aws s3 cp --quiet $< s3://$(S3_BUCKET_REF)
