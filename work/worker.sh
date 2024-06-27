@@ -132,8 +132,14 @@ done
 
 # Save our analysis before it is too late ...
 save_results() {
-	say "Save results at $OUTPUT_DIR to $S3_OUTPUT_BUCKET/$OUTPUT_DIR"
+	local rc=$?
+
+	if [[ "$rc" -ne 0 && "$rc" -ne 255 ]]; then
+		say "Received error signal :("
+	fi
+
 	if ls -A "$OUTPUT_DIR" > /dev/null 2>&1; then
+		say "Save results at $OUTPUT_DIR to $S3_OUTPUT_BUCKET/$OUTPUT_DIR"
 		aws s3 cp --quiet --recursive "$OUTPUT_DIR" "$S3_OUTPUT_BUCKET/$OUTPUT_DIR" \
 			|| die "Failed to save $OUTPUT_DIR to $S3_OUTPUT_BUCKET"
 	fi
@@ -141,7 +147,9 @@ save_results() {
 	say "Clean up the mess"
 	rm -rf "$OUTPUT_DIR" "$SIDER_DB_DIR" "$GDC_DIR" "$REFERENCE_DIR"
 
-	say "FINITO"
+	if [[ "$rc" -eq 0 ]]; then
+		say "FINITO"
+	fi
 }
 
 # Trap EXIT to enforce saving results
@@ -302,7 +310,7 @@ INNER JOIN source AS s
 	ON s.id = sr.source_id"
 
 say "Query split reads at '$SIDER_DB_DIR/$SIDER_PREFIX.db'"
-sqlite3 --tabs "$SIDER_DB_DIR/$SIDER_PREFIX.db" "$SQL_QUERY" \
+sqlite3 -header -separator $'\t' "$SIDER_DB_DIR/$SIDER_PREFIX.db" "$SQL_QUERY" \
 	| while read -ra cols; do
 		path="${cols[3]}"; path="${path##*/}"
 		cols[3]="${path%.*}"
