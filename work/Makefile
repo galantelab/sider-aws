@@ -57,6 +57,8 @@ $(MANIFESTS) &: $(DIR)/header.txt $(DIR)/content.txt
 		-exec bash -c 'cat $(word 1,$^) {} > {}.$$$$ && mv {}.$$$$ {}' ';'
 	rm -f $^
 
+.SECONDARY: $(DIR)/content.txt $(DIR)/header.txt
+
 $(DIR)/content.txt: $(WORK_MANIFEST_FILE) | $(DIR)
 	tail -n+2 $< > $@
 
