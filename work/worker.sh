@@ -162,8 +162,8 @@ exit_on_signal() {
 }
 
 # Trap killer signals
-for SIG in SIGINT SIGQUIT SIGABRT SIGKILL SIGTERM; do
-	trap "exit_on_signal $SIG" $SIG
+for sig in SIGINT SIGQUIT SIGABRT SIGKILL SIGTERM; do
+	trap "exit_on_signal $sig" $sig
 done
 
 say "Welcome to sideRETRO pipeline on AWS!"
@@ -203,7 +203,7 @@ chmod 600 "$GDC_DIR/$GDC_TOKEN" && gdc-client download \
 	--manifest="$GDC_DIR/$MANIFEST_FILE" \
 	--dir="$GDC_DIR" \
 	--log-file="$OUTPUT_DIR/gdc-client.log" \
-	> /dev/null \
+	> /dev/null 2>&1 \
 	|| die "Failed to run 'gdc-client'"
 
 say "Check all downloaded BAM files"
