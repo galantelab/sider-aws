@@ -2,8 +2,10 @@
 
 DIR       := @run
 NUM_JOBS  := $(shell perl -mPOSIX=ceil -ae 'END{print ceil(($$.-1)/$(WORK_BATCH_SIZE))}' $(WORK_MANIFEST_FILE))
-MANIFESTS := $(shell for i in $$(seq -f '%03.0f' $(NUM_JOBS)); do echo "$(DIR)/MANIFEST.batch$${i}"; done)
-JOBS      := $(shell for i in $$(seq -f '%03.0f' $(NUM_JOBS)); do echo "$(DIR)/batch$${i}.json"; done)
+FROM      ?= 1
+TO        := $(shell echo $$(( $(FROM) + $(NUM_JOBS) - 1 )))
+MANIFESTS := $(shell for i in $$(seq -f '%03.0f' $(FROM) $(TO)); do echo "$(DIR)/MANIFEST.batch$${i}"; done)
+JOBS      := $(shell for i in $$(seq -f '%03.0f' $(FROM) $(TO)); do echo "$(DIR)/batch$${i}.json"; done)
 
 .PHONY: all
 
@@ -49,7 +51,7 @@ $(MANIFESTS) &: $(DIR)/header.txt $(DIR)/content.txt
 	split \
 		--lines=$(WORK_BATCH_SIZE) \
 		--suffix-length=3 \
-		--numeric-suffixes=1 \
+		--numeric-suffixes=$(FROM) \
 		$(word 2,$^) $(DIR)/MANIFEST.batch
 	find $(DIR) \
 		-type f \
