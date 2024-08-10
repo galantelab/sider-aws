@@ -42,6 +42,7 @@ fi
 readonly OUTPUT_DIR="$AWS_BATCH_JOB_ID"
 readonly SIDER_DB_DIR="sider"
 readonly GDC_DIR="download"
+readonly GDC_RETRY_AMOUNT=1000
 readonly REFERENCE_DIR="reference"
 
 # Mandatory values
@@ -199,6 +200,7 @@ say "Run 'gdc-client' for MANIFEST file '$MANIFEST_FILE' and token '$GDC_TOKEN'"
 chmod 600 "$GDC_DIR/$GDC_TOKEN" && gdc-client download \
 	--color_off \
 	--n-processes="$GDC_JOBS" \
+	--retry-amount="$GDC_RETRY_AMOUNT" \
 	--token-file="$GDC_DIR/$GDC_TOKEN" \
 	--manifest="$GDC_DIR/$MANIFEST_FILE" \
 	--dir="$GDC_DIR" \
